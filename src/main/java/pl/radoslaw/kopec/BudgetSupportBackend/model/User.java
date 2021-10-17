@@ -1,5 +1,7 @@
 package pl.radoslaw.kopec.BudgetSupportBackend.model;
 
+import org.hibernate.annotations.Cascade;
+
 import javax.persistence.*;
 
 @Entity
@@ -7,15 +9,50 @@ import javax.persistence.*;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public int  id;
-    public String nickname;
-    public String name;
-    public String email;
-    public String lastname;
-    public String permissions;
-
+    private int  id;
+    private String nickname;
+    private String name;
+    private String lastname;
+    private String email;
+    private String permissions;
+    @OneToOne(
+            cascade = {CascadeType.ALL}
+    )
+    private Password password;
 
     public User() {
+
+    }
+
+
+    public Password getPassword() {
+        return password;
+    }
+
+    public void setPassword(Password password) {
+        this.password = password;
+    }
+
+
+    public User(String name, String lastname){
+        this.name = name;
+        this.lastname = lastname;
+    }
+
+    public User(User user) {
+        this.nickname = user.nickname;
+        this.lastname = user.lastname;
+        this.email = user.email;
+        this.name = user.name;
+        this.id = user.id;
+        this.permissions = user.permissions;
+        this.password = user.password;
+    }
+    public User( String nickname,String name, String email, String lastname,String permissions) {
+        this.nickname = nickname;
+        this.name = name;
+        this.email = email;
+        this.lastname = lastname;
     }
 
     public String getNickname() {
