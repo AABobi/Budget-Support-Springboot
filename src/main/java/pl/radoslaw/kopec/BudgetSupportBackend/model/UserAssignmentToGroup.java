@@ -26,6 +26,17 @@ public class UserAssignmentToGroup {
 
     private String uniqueGroupCode;
 
+    public UserAssignmentToGroup() {
+    }
+
+    public UserAssignmentToGroup(List<Budget> budgetList, User user, String budgetName, String uniqueGroupCode) {
+        this.budgetList = budgetList;
+        this.user = user;
+        this.budgetName = budgetName;
+        this.uniqueGroupCode = uniqueGroupCode;
+    }
+
+
     public int getId() {
         return id;
     }

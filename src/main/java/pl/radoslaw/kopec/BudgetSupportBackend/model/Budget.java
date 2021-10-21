@@ -24,6 +24,23 @@ public class Budget {
     )
     private User user;
 
+    public Budget(){}
+
+    public Budget(String description,String groupName, User user, String uniqueGroupCode){
+        this.description = description;
+        this.groupName = groupName;
+        this.user = user;
+        this.uniqueGroupCode = uniqueGroupCode;
+    }
+
+    public Budget(Budget b){
+        this.id = b.id;
+        this.value = b.value;
+        this.uniqueGroupCode = b.uniqueGroupCode;
+        this.groupName = b.groupName;
+        this.user = b.user;
+    }
+
     public int getId() {
         return id;
     }

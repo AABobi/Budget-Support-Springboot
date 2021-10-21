@@ -10,4 +10,6 @@ import java.util.List;
 public interface UserAssignmentToGroupRepository extends JpaRepository<UserAssignmentToGroup,Integer> {
 
     List<UserAssignmentToGroup> findByUniqueGroupCode(String uniqueGroupCode);
+
+    List<UserAssignmentToGroup> findByUserId(int id);
 }
