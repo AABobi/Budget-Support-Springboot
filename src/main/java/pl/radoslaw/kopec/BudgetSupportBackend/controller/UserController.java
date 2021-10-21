@@ -34,6 +34,24 @@ public class UserController {
 
 
 
+    @PostMapping({"/createBudget"})
+    public void createBudget(@RequestBody String[] arrayWithInformationAboutNewBudget) {
+        System.out.println("Connection test");
+        List<User> findUser = userRepository.findByNickname(arrayWithInformationAboutNewBudget[1]);
+        //todo - exception if there is no user
+        String randomUniqueCodeForBudget;
+        do{
+            randomUniqueCodeForBudget = RandomStringUtils.randomAlphanumeric(10);
+        }while(budgetRepository.findByUniqueGroupCode(randomUniqueCodeForBudget).size()!=0);
+
+        Budget budget = new Budget("Create budget", arrayWithInformationAboutNewBudget[0], findUser.get(0),randomUniqueCodeForBudget);
+        List<Budget> budgetListForUserAssignment = new ArrayList<>();
+        budgetListForUserAssignment.add(budget);
+        UserAssignmentToGroup userAssignmentToGroup = new UserAssignmentToGroup(budgetListForUserAssignment,findUser.get(0), arrayWithInformationAboutNewBudget[0], randomUniqueCodeForBudget);
+        budgetRepository.save(budget);
+        userAssignmentToGroupRepository.save(userAssignmentToGroup);
+
+    }
 
 
 
