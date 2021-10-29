@@ -11,5 +11,7 @@ public interface UserAssignmentToGroupRepository extends JpaRepository<UserAssig
 
     List<UserAssignmentToGroup> findByUniqueGroupCode(String uniqueGroupCode);
 
-    List<UserAssignmentToGroup> findByUserId(int id);
+
+    List<UserAssignmentToGroup> findById(int id);
+
 }

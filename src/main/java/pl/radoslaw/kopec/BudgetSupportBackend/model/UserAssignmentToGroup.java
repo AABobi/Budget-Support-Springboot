@@ -12,29 +12,26 @@ public class UserAssignmentToGroup {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @OneToMany(
-            cascade = {CascadeType.ALL}
-    )
+    @OneToMany(cascade = {CascadeType.ALL})
     private List<Budget> budgetList;
 
-    @OneToOne(
-            cascade = {CascadeType.ALL}
-    )
-    private User user;
 
     private String budgetName;
 
     private String uniqueGroupCode;
 
+
+
     public UserAssignmentToGroup() {
     }
 
-    public UserAssignmentToGroup(List<Budget> budgetList, User user, String budgetName, String uniqueGroupCode) {
+    public UserAssignmentToGroup(List<Budget> budgetList,  String budgetName, String uniqueGroupCode) {
         this.budgetList = budgetList;
-        this.user = user;
         this.budgetName = budgetName;
         this.uniqueGroupCode = uniqueGroupCode;
     }
+
+
 
 
     public int getId() {
@@ -53,13 +50,6 @@ public class UserAssignmentToGroup {
         this.budgetList = budgetList;
     }
 
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
 
     public String getBudgetName() {
         return budgetName;

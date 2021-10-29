@@ -3,38 +3,32 @@ package pl.radoslaw.kopec.BudgetSupportBackend.model;
 import org.hibernate.annotations.Cascade;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Table(name = "user")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int  id;
+    private int id;
     private String nickname;
     private String name;
     private String lastname;
     private String email;
-    private String permissions;
-    @OneToOne(
-            cascade = {CascadeType.ALL}
-    )
+
+    @OneToOne(cascade = {CascadeType.ALL})
     private Password password;
 
+    @OneToMany(cascade = {CascadeType.ALL})
+    private List<UserAssignmentToGroup> userAssignmentToGroup;
+
+    @OneToMany(cascade = {CascadeType.ALL})
+    private List<Permission> permission;
+
     public User() {
-
     }
 
-
-    public Password getPassword() {
-        return password;
-    }
-
-    public void setPassword(Password password) {
-        this.password = password;
-    }
-
-
-    public User(String name, String lastname){
+    public User(String name, String lastname) {
         this.name = name;
         this.lastname = lastname;
     }
@@ -45,14 +39,33 @@ public class User {
         this.email = user.email;
         this.name = user.name;
         this.id = user.id;
-        this.permissions = user.permissions;
         this.password = user.password;
+        this.userAssignmentToGroup = user.userAssignmentToGroup;
+        this.permission = user.permission;
     }
-    public User( String nickname,String name, String email, String lastname,String permissions) {
+
+    public User(String nickname, String name, String email, String lastname) {
         this.nickname = nickname;
         this.name = name;
         this.email = email;
         this.lastname = lastname;
+    }
+
+    public Password getPassword() {
+        return password;
+    }
+
+    public void setPassword(Password password) {
+        this.password = password;
+    }
+
+
+    public List<UserAssignmentToGroup> getUserAssignmentToGroup() {
+        return userAssignmentToGroup;
+    }
+
+    public void setUserAssignmentToGroup(List<UserAssignmentToGroup> userAssignmentToGroup) {
+        this.userAssignmentToGroup = userAssignmentToGroup;
     }
 
     public String getNickname() {
@@ -87,19 +100,19 @@ public class User {
         this.lastname = lastname;
     }
 
-    public String getPermissions() {
-        return this.permissions;
-    }
-
-    public void setPermissions(String permissions) {
-        this.permissions = permissions;
-    }
-
     public int getId() {
         return id;
     }
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public List<Permission> getPermission() {
+        return permission;
+    }
+
+    public void setPermission(List<Permission> permission) {
+        this.permission = permission;
     }
 }

@@ -1,18 +1,17 @@
 package pl.radoslaw.kopec.BudgetSupportBackend.controller;
 
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import pl.radoslaw.kopec.BudgetSupportBackend.model.Budget;
-import pl.radoslaw.kopec.BudgetSupportBackend.model.User;
-import pl.radoslaw.kopec.BudgetSupportBackend.model.UserAssignmentToGroup;
+import pl.radoslaw.kopec.BudgetSupportBackend.model.*;
 import pl.radoslaw.kopec.BudgetSupportBackend.repository.BudgetRepository;
 import pl.radoslaw.kopec.BudgetSupportBackend.repository.UserAssignmentToGroupRepository;
 import pl.radoslaw.kopec.BudgetSupportBackend.repository.UserRepository;
 import org.apache.commons.lang.RandomStringUtils;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
+
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,6 +33,9 @@ public class UserController {
 
 
 
+
+   //This method gets String array [0] group name ( to create new group ) and [1] usernick name.
+    //With user nickname we can find obj of this user and create group with this user
     @PostMapping({"/createBudget"})
     public void createBudget(@RequestBody String[] arrayWithInformationAboutNewBudget) {
         System.out.println("Connection test");
@@ -44,12 +46,25 @@ public class UserController {
             randomUniqueCodeForBudget = RandomStringUtils.randomAlphanumeric(10);
         }while(budgetRepository.findByUniqueGroupCode(randomUniqueCodeForBudget).size()!=0);
 
-        Budget budget = new Budget("Create budget", arrayWithInformationAboutNewBudget[0], findUser.get(0),randomUniqueCodeForBudget);
+        Budget budget = new Budget("Create budget", arrayWithInformationAboutNewBudget[0], randomUniqueCodeForBudget, arrayWithInformationAboutNewBudget[1]);
         List<Budget> budgetListForUserAssignment = new ArrayList<>();
         budgetListForUserAssignment.add(budget);
-        UserAssignmentToGroup userAssignmentToGroup = new UserAssignmentToGroup(budgetListForUserAssignment,findUser.get(0), arrayWithInformationAboutNewBudget[0], randomUniqueCodeForBudget);
-        budgetRepository.save(budget);
-        userAssignmentToGroupRepository.save(userAssignmentToGroup);
+
+        //array [0] = user name
+        UserAssignmentToGroup userAssignmentToGroup =
+                new UserAssignmentToGroup(budgetListForUserAssignment, arrayWithInformationAboutNewBudget[0], randomUniqueCodeForBudget);
+
+        List<UserAssignmentToGroup> userAssignmentToGroupList = new ArrayList<>();
+        userAssignmentToGroupList.add(userAssignmentToGroup);
+
+        Permission permission = new Permission();
+        permission.setUniqueGroupCode(randomUniqueCodeForBudget);
+        List<Permission> permissionsList = new LinkedList<>();
+        permissionsList.add(permission);
+
+        findUser.get(0).getPermission().add(permission);
+        findUser.get(0).getUserAssignmentToGroup().add(userAssignmentToGroup);
+        userRepository.save(findUser.get(0));
 
     }
 
@@ -69,103 +84,43 @@ public class UserController {
             return returnUser = new User("NC", "NC");
         }
     }
-    //Just test
-    @PostMapping({"/findAllBudgetsOfUser2"})
-    public UserAssignmentToGroup[] findAllBudgetsOfUser2(@RequestBody User user){
 
-        UserAssignmentToGroup[] arrayToExceptions = new UserAssignmentToGroup[1];
-        //Find user
-        List<User> findUser = userRepository.findByNickname(user.getNickname());
-        //IndexOutOfBoundsException possibility
-        if(findUser.size() == 0){
-            UserAssignmentToGroup usg = new UserAssignmentToGroup();
-            usg.setBudgetName("Cannot find user " + user.getNickname());
-            System.out.println("null1");
-            arrayToExceptions[1] = usg;
-            return  arrayToExceptions;
-        }
+    //This method can deletes budget.
+    //This method gets a parametr id of user assignment to group object.
+    //Uses repository and id to find an object in DB.
+    //Finds all users who are members to the budget and deletes it from user's objetcs and DB
+    //todo - response entity
+    @DeleteMapping(value = "/deleteBudget/{id}")
+    public void  deletePost(@PathVariable int id){
+        List<UserAssignmentToGroup> userAssignmentToGroupList = userAssignmentToGroupRepository.findById(id);
+        List<User> userList = userRepository.findByUserAssignmentToGroup(userAssignmentToGroupList.get(0));
 
-        //Find user in UserAssignmentToGroup database
-        List<UserAssignmentToGroup> findBudgetsOfUser = userAssignmentToGroupRepository.findByUserId(findUser.get(0).getId());
-        if(findBudgetsOfUser.size() == 0){
-            UserAssignmentToGroup usg = new UserAssignmentToGroup();
-            usg.setBudgetName("Cannot find budget " + user.getNickname());
-            System.out.println("null2");
-            arrayToExceptions[1] = usg;
-            return  arrayToExceptions;
-        }
-
-        for(UserAssignmentToGroup x: findBudgetsOfUser){
-            System.out.println(x.getBudgetName());
-        }
-        List<UserAssignmentToGroup> segregatedList = findBudgetsOfUser.stream()
-                .sorted(Comparator.comparing(UserAssignmentToGroup::getBudgetName))
-                .collect(Collectors.toList());
-        int iteratorFinalList = 0;
-
-        List<UserAssignmentToGroup> finalList = new ArrayList<>();
-        finalList.add(segregatedList.get(0));
-        System.out.println(segregatedList.size());
-
-        for(UserAssignmentToGroup x: findBudgetsOfUser){
-            if(!finalList.get(iteratorFinalList).equals(x)){
-                iteratorFinalList++;
-                finalList.add(x);
+        try {
+            for (User x : userList) {
+                for (int i = 0; x.getUserAssignmentToGroup().size() > i; i++) {
+                    if (x.getUserAssignmentToGroup().get(i).equals(userAssignmentToGroupList.get(0))) {
+                        x.getUserAssignmentToGroup().remove(x.getUserAssignmentToGroup().get(i));
+                    }
+                }
             }
+            userAssignmentToGroupRepository.delete(userAssignmentToGroupList.get(0));
+        }catch (ConcurrentModificationException e){
+            System.out.println(userList.get(0).getUserAssignmentToGroup().size());
+
+
         }
 
-        System.out.println("final size "+ finalList.size());
-        return null;
     }
+
 
 
     //Probably to change
     @PostMapping({"/findAllBudgetsOfUser"})
-    public UserAssignmentToGroup[] findAllBudgetsOfUser(@RequestBody User user){
-
-        UserAssignmentToGroup[] arrayToExceptions = new UserAssignmentToGroup[1];
-        //Find user
-        List<User> findUser = userRepository.findByNickname(user.getNickname());
-        //IndexOutOfBoundsException possibility
-        if(findUser.size() == 0){
-            UserAssignmentToGroup usg = new UserAssignmentToGroup();
-            usg.setBudgetName("Cannot find user " + user.getNickname());
-            System.out.println("null1");
-            arrayToExceptions[1] = usg;
-            return  arrayToExceptions;
-        }
-        //Find user in UserAssignmentToGroup database
-        List<UserAssignmentToGroup> findBudgetsOfUser = userAssignmentToGroupRepository.findByUserId(findUser.get(0).getId());
-        if(findBudgetsOfUser.size() == 0){
-            UserAssignmentToGroup usg = new UserAssignmentToGroup();
-            usg.setBudgetName("Cannot find budget " + user.getNickname());
-            System.out.println("null2");
-            arrayToExceptions[1] = usg;
-            return  arrayToExceptions;
-        }
-        for(UserAssignmentToGroup x: findBudgetsOfUser){
-            List<UserAssignmentToGroup> segregatedList = new LinkedList<>();
-
-        }
-        List<UserAssignmentToGroup> budgetList = new LinkedList<>();
-        for(int i = 0; i < findBudgetsOfUser.size(); i++) {
-            budgetList.add(userAssignmentToGroupRepository.findByUniqueGroupCode(findBudgetsOfUser.get(i).getUniqueGroupCode()).get(0));
-        }
-        System.out.println(budgetList.size());
-        //IndexOutOfBoundsException
-        if(budgetList.size() == 0){
-            UserAssignmentToGroup usg = new UserAssignmentToGroup();
-            usg.setBudgetName("Cannot find budget " + user.getNickname());
-            System.out.println("null3");
-            arrayToExceptions[1] = usg;
-            return  arrayToExceptions;
-        }
-        System.out.println("before done");
-        System.out.println(budgetList.get(0).getBudgetList().size());
-
-        UserAssignmentToGroup[] arrayToSend = budgetList.toArray(new UserAssignmentToGroup[0]);
-        return arrayToSend;
+    public User findAllBudgetsOfUser(@RequestBody User user){
+        List<User> userList = userRepository.findByNickname(user.getNickname());
+        return userList.get(0);
     }
+
     @GetMapping({"/firstConn"})
     public void hello(){
      //   User user = new User("a","b","c","d","e");

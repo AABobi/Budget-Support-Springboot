@@ -17,28 +17,26 @@ public class Budget {
 
     private String uniqueGroupCode;
 
-    private String groupName;
+    private String budgetName;
 
-    @OneToOne(
-            cascade = {CascadeType.ALL}
-    )
-    private User user;
+    private String userName;
 
     public Budget(){}
 
-    public Budget(String description,String groupName, User user, String uniqueGroupCode){
-        this.description = description;
-        this.groupName = groupName;
-        this.user = user;
-        this.uniqueGroupCode = uniqueGroupCode;
-    }
 
     public Budget(Budget b){
         this.id = b.id;
         this.value = b.value;
         this.uniqueGroupCode = b.uniqueGroupCode;
-        this.groupName = b.groupName;
-        this.user = b.user;
+        this.budgetName = b.budgetName;
+        this.userName = b.userName;
+    }
+
+    public Budget(String description, String budgetName, String randomUniqueCodeForBudget, String userName) {
+    this.description = description;
+    this.budgetName = budgetName;
+    this.uniqueGroupCode = randomUniqueCodeForBudget;
+    this.userName = userName;
     }
 
     public int getId() {
@@ -74,18 +72,18 @@ public class Budget {
     }
 
     public String getGroupName() {
-        return groupName;
+        return budgetName;
     }
 
-    public void setGroupName(String groupName) {
-        this.groupName = groupName;
+    public void setGroupName(String budgetName) {
+        this.budgetName = budgetName;
     }
 
-    public User getUser() {
-        return user;
+    public String getUser() {
+        return userName;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setUser(String userName) {
+        this.userName = userName;
     }
 }
