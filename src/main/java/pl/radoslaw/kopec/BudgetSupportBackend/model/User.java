@@ -19,7 +19,7 @@ public class User {
     @OneToOne(cascade = {CascadeType.ALL})
     private Password password;
 
-    @OneToMany(cascade = {CascadeType.ALL})
+    @ManyToMany(cascade = {CascadeType.ALL})
     private List<UserAssignmentToGroup> userAssignmentToGroup;
 
     @OneToMany(cascade = {CascadeType.ALL})

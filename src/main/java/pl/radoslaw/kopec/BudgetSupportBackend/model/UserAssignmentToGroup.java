@@ -32,8 +32,6 @@ public class UserAssignmentToGroup {
     }
 
 
-
-
     public int getId() {
         return id;
     }
