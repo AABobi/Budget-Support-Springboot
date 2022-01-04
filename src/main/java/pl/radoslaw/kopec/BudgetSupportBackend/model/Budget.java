@@ -2,6 +2,7 @@ package pl.radoslaw.kopec.BudgetSupportBackend.model;
 
 
 import javax.persistence.*;
+import java.util.Calendar;
 
 @Entity
 @Table(name = "budget")
@@ -16,6 +17,8 @@ public class Budget {
     private int value;
 
     private String uniqueGroupCode;
+
+    private String date;
 
     private String budgetName;
 
@@ -53,6 +56,14 @@ public class Budget {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
     }
 
     public int getId() {

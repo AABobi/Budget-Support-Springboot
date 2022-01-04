@@ -10,6 +10,7 @@ import pl.radoslaw.kopec.BudgetSupportBackend.model.*;
 import pl.radoslaw.kopec.BudgetSupportBackend.repository.*;
 import org.apache.commons.lang.RandomStringUtils;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -32,35 +33,41 @@ public class UserController {
 
     //This method adds new budget group to the user list.
     @PostMapping("/addNewMemberToTheBudget")
-    public void addNewMemberToTheBudget(@RequestBody User user){
-       userRepository.save(user);
+    public void addNewMemberToTheBudget(@RequestBody User user) {
+        userRepository.save(user);
     }
 
     //This method adds new description position to the budget.
     //Not finished yet
     @PostMapping({"/addDescriptionToTheBudget"})
-    public User addDescriptionToTheBudget(@RequestBody User user){
+    public UserAssignmentToGroup addDescriptionToTheBudget(@RequestBody UserAssignmentToGroup userAssignmentToGroup) {
+        // Date to string.
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DATE, 1);
+        SimpleDateFormat format1 = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        String formatted = format1.format(cal.getTime());
         try{
-            userRepository.save(user);
-        }catch (NullPointerException e){
+                // Add date to the last object in list.
+                userAssignmentToGroup.getBudgetList().get(userAssignmentToGroup.getBudgetList().size() - 1).setDate(formatted);
+                userAssignmentToGroupRepository.save(userAssignmentToGroup);
+
+        }catch (IndexOutOfBoundsException e){
+            System.out.println(e);
         }
 
-        /*  for(int i = 0; i < user.getUserAssignmentToGroup().size();i++){
-            System.out.println(user.getUserAssignmentToGroup().get(0).getUniqueGroupCode());
-        }*/
-           return user;
+        return userAssignmentToGroup;
     }
 
-   //This method gets String array [0] group name ( to create new group ) and [1] usernick name.
+    //This method gets String array [0] group name ( to create new group ) and [1] usernick name.
     //With user nickname we can find obj of this user and create group with this user
     @PostMapping({"/createBudget"})
     public void createBudget(@RequestBody String[] arrayWithInformationAboutNewBudget) {
         List<User> findUser = userRepository.findByNickname(arrayWithInformationAboutNewBudget[1]);
         //todo - exception if there is no user
         String randomUniqueCodeForBudget;
-        do{
+        do {
             randomUniqueCodeForBudget = RandomStringUtils.randomAlphanumeric(10);
-        }while(budgetRepository.findByUniqueGroupCode(randomUniqueCodeForBudget).size()!=0);
+        } while (budgetRepository.findByUniqueGroupCode(randomUniqueCodeForBudget).size() != 0);
 
         List<Budget> budgetListForUserAssignment = new ArrayList<>();
 
@@ -68,10 +75,11 @@ public class UserController {
         UserAssignmentToGroup userAssignmentToGroup =
                 new UserAssignmentToGroup(budgetListForUserAssignment, arrayWithInformationAboutNewBudget[0], randomUniqueCodeForBudget);
 
-        if(findUser.get(0).getUserAssignmentToGroup() != null){
+
+        if (findUser.get(0).getUserAssignmentToGroup() != null) {
             findUser.get(0).getUserAssignmentToGroup().add(userAssignmentToGroup);
 
-        }else{
+        } else {
             List<UserAssignmentToGroup> newListOfUserAssignmentToGroup = List.of(userAssignmentToGroup);
             findUser.get(0).setUserAssignmentToGroup(newListOfUserAssignmentToGroup);
         }
@@ -87,20 +95,17 @@ public class UserController {
     }
 
 
-
     //Simple login to application.
     //Will be overwriting soon
     @PostMapping({"/checkLogin"})
-    public User checkLogin(@RequestBody User userPass){
+    public User checkLogin(@RequestBody User userPass) {
         System.out.println("test");
         List<User> listForFindUserToLogin = new LinkedList<>(userRepository.findByNickname(userPass.getNickname()));
         User returnUser;
         if (listForFindUserToLogin.size() > 0 && listForFindUserToLogin.get(0).getPassword().getPassword().equals(userPass.getPassword().getPassword())) {
             returnUser = new User(listForFindUserToLogin.get(0));
-            System.out.println("good");
             return returnUser;
         } else {
-            System.out.println("no good");
             return returnUser = new User("NC", "NC");
         }
     }
@@ -108,68 +113,45 @@ public class UserController {
 
     //This method will delete the descriptions
     @PostMapping(value = "/deleteEntry")
-    public UserAssignmentToGroup deleteEntry(@RequestBody Budget budget){
-          List<UserAssignmentToGroup> userAssignmentToGroupList = userAssignmentToGroupRepository.findByUniqueGroupCode(budget.getUniqueGroupCode());
-        try{
-            for(Budget x: userAssignmentToGroupList.get(0).getBudgetList()){
-                if(x.getId() == budget.getId()){
-                    userAssignmentToGroupList.get(0).getBudgetList().remove(x);
-                    return userAssignmentToGroupList.get(0);
-                }
-            }
-        }catch (NullPointerException e){
-            System.out.println("No lsit");
-        }
+    public UserAssignmentToGroup deleteEntry(@RequestBody UserAssignmentToGroup userAssignmentToGroup) {
+
         return null;
     }
-    //This method can deletes budget.
-    //This method gets a parametr id of user assignment to group object.
-    //Uses repository and id to find an object in DB.
-    //Finds all users who are members to the budget and deletes it from user's objetcs and DB
-    //todo - response entity
 
-    //This method deletes budget
-    @DeleteMapping(value = "/deleteBudget/{id}")
-    public void  deleteBudget(@PathVariable int id){
-        List<UserAssignmentToGroup> userAssignmentToGroupList = userAssignmentToGroupRepository.findById(id);
-        List<User> userList = userRepository.findByUserAssignmentToGroup(userAssignmentToGroupList.get(0));
-
-        try {
-            for (User x : userList) {
-                for (int i = 0; x.getUserAssignmentToGroup().size() > i; i++) {
-                    if (x.getUserAssignmentToGroup().get(i).equals(userAssignmentToGroupList.get(0))) {
-                        x.getUserAssignmentToGroup().remove(x.getUserAssignmentToGroup().get(i));
-                    }
-                }
-            }
-            userAssignmentToGroupRepository.delete(userAssignmentToGroupList.get(0));
-        }catch (ConcurrentModificationException e){
-            System.out.println(userList.get(0).getUserAssignmentToGroup().size());
-
-
+    //This method get an object uasg (budget to delete) and
+    @PostMapping({"/deleteBudget"})
+    public void deleteBudget(@RequestBody UserAssignmentToGroup userAssignmentToGroup) {
+        UserAssignmentToGroup exactlyObjectUasg;
+        // Find correct object and save it to the variable
+        exactlyObjectUasg = userAssignmentToGroupRepository.findByUniqueGroupCode(userAssignmentToGroup.getUniqueGroupCode()).get(0);
+        // List of all budget members.
+        List<User> findUserWithBudget = userRepository.findByUserAssignmentToGroup(userAssignmentToGroup);
+        // Remove budget(userAssignmentToGroup) from users object
+        for(User x : findUserWithBudget){
+            x.getUserAssignmentToGroup().remove(exactlyObjectUasg);
+            userRepository.save(x);
         }
 
     }
-
 
 
     //Probably to change
     @PostMapping({"/findAllBudgetsOfUser"})
-    public User findAllBudgetsOfUser(@RequestBody User user){
+    public User findAllBudgetsOfUser(@RequestBody User user) {
         List<User> userList = userRepository.findByNickname(user.getNickname());
         return userList.get(0);
     }
 
     //Return user with list of budgets. This method returns all all entries included in
     @PostMapping({"findUser"})
-    public User findUser(@RequestBody User user){
+    public User findUser(@RequestBody User user) {
 
-        return  userRepository.findByNickname(user.getNickname()).get(0);
+        return userRepository.findByNickname(user.getNickname()).get(0);
     }
 
     @GetMapping({"/firstConn"})
-    public void hello(){
-     //   User user = new User("a","b","c","d","e");
+    public void hello() {
+        //   User user = new User("a","b","c","d","e");
      /*   if (userRepository.findAll().size() == 0) {
             userRepository.save(user);
         }
@@ -190,10 +172,33 @@ public class UserController {
         userAssignmentToGroupRepository.save(userAssignmentToGroup);*/
         System.out.println(userAssignmentToGroupRepository.findByUniqueGroupCode("zzz").size());
         System.out.println(userAssignmentToGroupRepository.findAll().size());
-        for (Budget x : budgetRepository.findByUniqueGroupCode(userAssignmentToGroupRepository.findAll().get(0).getUniqueGroupCode())){
+        for (Budget x : budgetRepository.findByUniqueGroupCode(userAssignmentToGroupRepository.findAll().get(0).getUniqueGroupCode())) {
             System.out.println(x.getDescription());
         }
 
+
+    }
+
+    //userToFind have only nickname of user and one object to delete (obj represent group what user want to leave).
+    @PostMapping({"/leaveTheGroup"})
+    public void leaveTheGroup(@RequestBody User userToFind){
+        System.out.println("test");
+        try {
+            //User jpa method to find this user with only nickname
+            User user = userRepository.findByNickname(userToFind.getNickname()).get(0);
+            //And find uasg object with unique code. We need this objects to use them.
+            UserAssignmentToGroup userAssignmentToGroup = userAssignmentToGroupRepository
+                    .findByUniqueGroupCode(userToFind
+                            .getUserAssignmentToGroup()
+                            .get(0).getUniqueGroupCode()
+                    ).get(0);
+
+            //Remove budget from user list and save this user in data base.
+            user.getUserAssignmentToGroup().remove(userAssignmentToGroup);
+            userRepository.save(user);
+        }catch (IndexOutOfBoundsException e){
+            System.out.println(e);
+        }
 
 
     }

@@ -15,11 +15,9 @@ public class UserAssignmentToGroup {
     @OneToMany(cascade = {CascadeType.ALL})
     private List<Budget> budgetList;
 
-
     private String budgetName;
 
     private String uniqueGroupCode;
-
 
 
     public UserAssignmentToGroup() {
@@ -30,6 +28,8 @@ public class UserAssignmentToGroup {
         this.budgetName = budgetName;
         this.uniqueGroupCode = uniqueGroupCode;
     }
+
+
 
 
     public int getId() {
