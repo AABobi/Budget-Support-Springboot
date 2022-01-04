@@ -214,6 +214,8 @@ public class UserController {
 
 
         List<UserInBudget> listOfUsersForUatg = userInBudgetRepository.findByNickname(arrayWithInformationAboutNewBudget[1]);
+        System.out.println(listOfUsersForUatg.size()+"uib size");
+        System.out.println(listOfUsersForUatg.get(0));
         //listOfUsersForUatg.add(userInBudgetRepository.findByNickname(arrayWithInformationAboutNewBudget[1]).get(0));
         userAssignmentToGroup.setListOfMembers(listOfUsersForUatg);
         if (findUser.get(0).getUserAssignmentToGroup() != null) {
@@ -445,6 +447,7 @@ public class UserController {
     //Return user with list of budgets. This method returns all all entries included in
     @PostMapping({"/findUser"})
     public User findUser(@RequestBody User user) {
+        System.out.println("finduser");
         List<User> findUser = userRepository.findByNickname(user.getNickname());
         return findUser.get(0);
     }
@@ -474,7 +477,7 @@ public class UserController {
     @GetMapping("/findBudgetForListOfMembers/{code}&{nickname}")
     public UserAssignmentToGroup findBudgetForListOfMembers(@PathVariable String code, @PathVariable String nickname) {
         List<UserAssignmentToGroup> findBudget = userAssignmentToGroupRepository.findByUniqueGroupCode(code);
-        if (findBudget.size() != 0 && findBudget.get(0).getListOfMembers().size() > 1) {
+      /*  if (findBudget.size() != 0 && findBudget.get(0).getListOfMembers().size() > 0) {
             for(UserInBudget x: findBudget.get(0).getListOfMembers()){
                 if(x.getNickname().equals(nickname)){
                     findBudget.get(0).getListOfMembers().remove(x);
@@ -482,9 +485,12 @@ public class UserController {
                 }
             }
             return findBudget.get(0);
-        }
-
-        return null;
+        }*/
+       if(findBudget != null) {
+           return findBudget.get(0);
+       }else{
+           return null;
+       }
     }
 
     @GetMapping({"/firstConn"})
@@ -584,7 +590,7 @@ public class UserController {
             if(x.getBudgetEndDate() != null) {
                 System.out.println("one");
                 endDate = new SimpleDateFormat("yyyy-MM-dd").parse(x.getBudgetEndDate());
-                if(todayDate.before(endDate)) {
+                if(todayDate.after(endDate)) {
                     System.out.println("methoda?");
                     budgetToHistoryForAllMembers(x);
                 }
@@ -598,6 +604,7 @@ public class UserController {
 
     @PostMapping({"/saveBudgetSettings"})
     public void saveBudgetSettings(@RequestBody UserAssignmentToGroup userAssignmentToGroup) {
+        System.out.println(userAssignmentToGroup.getBudgetEndDate());
         List<UserAssignmentToGroup> uatg = userAssignmentToGroupRepository.findByUniqueGroupCode(userAssignmentToGroup.getUniqueGroupCode());
         uatg.get(0).setBudgetStartDate(userAssignmentToGroup.getBudgetStartDate());
         uatg.get(0).setBudgetEndDate(userAssignmentToGroup.getBudgetEndDate());
@@ -721,15 +728,23 @@ public class UserController {
 
     public void budgetToHistoryForAllMembers(UserAssignmentToGroup userAssignmentToGroup){
         List<UserAssignmentToGroup> testList = userAssignmentToGroupRepository.findByUniqueGroupCode(userAssignmentToGroup.getUniqueGroupCode());
-        List<User> members = userRepository.findByUserAssignmentToGroup(userAssignmentToGroup);
-        History history = new History(userAssignmentToGroup);
-        //historyRepository.save(history);
 
-       // History history2 = historyRepository.findByUniqueGroupCode(history.getUniqueGroupCode());
+        List<User> members = userRepository.findByUserAssignmentToGroup(userAssignmentToGroup);
+
+        History history = new History(userAssignmentToGroup);
+
+        boolean variableToBlockMultiSaveSameObject = false;
         for(User m: members){
-            m.getHistory().add(history);
-            m.getUserAssignmentToGroup().remove(testList.get(0));
-            userRepository.save(m);
+            if(!variableToBlockMultiSaveSameObject) {
+                m.getHistory().add(history);
+                m.getUserAssignmentToGroup().remove(testList.get(0));
+                userRepository.save(m);
+                variableToBlockMultiSaveSameObject = true;
+            }else{
+                m.getHistory().add(historyRepository.findByUniqueGroupCode(history.getUniqueGroupCode()));
+                m.getUserAssignmentToGroup().remove(testList.get(0));
+                userRepository.save(m);
+            }
         }
 
         userAssignmentToGroupRepository.delete(userAssignmentToGroup);
