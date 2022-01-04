@@ -14,6 +14,8 @@ public class Permission {
 
     private String uniqueGroupCode;
 
+    private int typeOfPermission;
+
     public int getId() {
         return id;
     }
@@ -28,5 +30,13 @@ public class Permission {
 
     public void setUniqueGroupCode(String uniqueGroupCode) {
         this.uniqueGroupCode = uniqueGroupCode;
+    }
+
+    public int getTypeOfPermission() {
+        return typeOfPermission;
+    }
+
+    public void setTypeOfPermission(int typeOfPermission) {
+        this.typeOfPermission = typeOfPermission;
     }
 }

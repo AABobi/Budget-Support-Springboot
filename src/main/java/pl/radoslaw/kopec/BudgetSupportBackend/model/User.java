@@ -1,11 +1,12 @@
 package pl.radoslaw.kopec.BudgetSupportBackend.model;
 
-import org.hibernate.annotations.Cascade;
+import lombok.Data;
 
 import javax.persistence.*;
 import java.util.List;
 
 @Entity
+@Data
 @Table(name = "user")
 public class User {
     @Id
@@ -15,6 +16,7 @@ public class User {
     private String name;
     private String lastname;
     private String email;
+    private String confirm;
 
     @OneToOne(cascade = {CascadeType.ALL})
     private Password password;
@@ -22,15 +24,28 @@ public class User {
     @ManyToMany(cascade = {CascadeType.ALL})
     private List<UserAssignmentToGroup> userAssignmentToGroup;
 
+    @ManyToMany(cascade = {CascadeType.ALL})
+    private List<History> history;
+
     @OneToMany(cascade = {CascadeType.ALL})
     private List<Permission> permission;
 
     public User() {
     }
 
+    public User(String nickname){
+        this.nickname = nickname;
+    }
     public User(String name, String lastname) {
         this.name = name;
         this.lastname = lastname;
+    }
+    public User(String nickname, String name, String lastname, String email, String confirm) {
+        this.name = name;
+        this.lastname = lastname;
+        this.nickname = nickname;
+        this.email = email;
+        this.confirm = confirm;
     }
 
     public User(User user) {
@@ -42,6 +57,7 @@ public class User {
         this.password = user.password;
         this.userAssignmentToGroup = user.userAssignmentToGroup;
         this.permission = user.permission;
+        this.confirm = user.confirm;
     }
 
     public User(String nickname, String name, String email, String lastname) {
@@ -114,5 +130,21 @@ public class User {
 
     public void setPermission(List<Permission> permission) {
         this.permission = permission;
+    }
+
+    public String getConfirm() {
+        return confirm;
+    }
+
+    public void setConfirm(String confirm) {
+        this.confirm = confirm;
+    }
+
+    public List<History> getHistory() {
+        return history;
+    }
+
+    public void setHistory(List<History> history) {
+        this.history = history;
     }
 }

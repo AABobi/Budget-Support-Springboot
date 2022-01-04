@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface BudgetRepository extends JpaRepository<Budget, Integer> {
     List<Budget> findByUniqueGroupCode(String uniqueGroupCode);
+
+    List<Budget> findById(int id);
 }

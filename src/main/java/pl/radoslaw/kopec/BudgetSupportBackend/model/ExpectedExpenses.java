@@ -4,9 +4,8 @@ package pl.radoslaw.kopec.BudgetSupportBackend.model;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "budget")
-public class Budget {
-
+@Table(name = "expected_expenses")
+public class ExpectedExpenses {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
@@ -23,16 +22,10 @@ public class Budget {
 
     private String userName;
 
-    public Budget(){}
+    public ExpectedExpenses(){}
 
-    public Budget(ExpectedExpenses expectedExpenses){
-        this.description = expectedExpenses.getDescription();
-        this.value = expectedExpenses.getValue();
-        this.uniqueGroupCode = expectedExpenses.getUniqueGroupCode();
-        this.budgetName = expectedExpenses.getBudgetName();
-    }
 
-    public Budget(Budget b){
+    public ExpectedExpenses(ExpectedExpenses b){
         this.id = b.id;
         this.value = b.value;
         this.uniqueGroupCode = b.uniqueGroupCode;
@@ -40,35 +33,11 @@ public class Budget {
         this.userName = b.userName;
     }
 
-    public Budget(String description, String budgetName, String randomUniqueCodeForBudget, String userName) {
-    this.description = description;
-    this.budgetName = budgetName;
-    this.uniqueGroupCode = randomUniqueCodeForBudget;
-    this.userName = userName;
-    }
-
-    public String getBudgetName() {
-        return budgetName;
-    }
-
-    public void setBudgetName(String budgetName) {
+    public ExpectedExpenses(String description, String budgetName, String randomUniqueCodeForBudget, String userName) {
+        this.description = description;
         this.budgetName = budgetName;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
+        this.uniqueGroupCode = randomUniqueCodeForBudget;
         this.userName = userName;
-    }
-
-    public String getDate() {
-        return date;
-    }
-
-    public void setDate(String date) {
-        this.date = date;
     }
 
     public int getId() {
@@ -103,19 +72,27 @@ public class Budget {
         this.uniqueGroupCode = uniqueGroupCode;
     }
 
-    public String getGroupName() {
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public String getBudgetName() {
         return budgetName;
     }
 
-    public void setGroupName(String budgetName) {
+    public void setBudgetName(String budgetName) {
         this.budgetName = budgetName;
     }
 
-    public String getUser() {
+    public String getUserName() {
         return userName;
     }
 
-    public void setUser(String userName) {
+    public void setUserName(String userName) {
         this.userName = userName;
     }
 }

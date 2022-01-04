@@ -1,19 +1,15 @@
 package pl.radoslaw.kopec.BudgetSupportBackend.model;
 
-
 import javax.persistence.*;
 import java.util.List;
 
 @Entity
-@Table(name = "user_assignment_to_group")
-public class UserAssignmentToGroup {
+@Table(name = "history")
+public class History {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-
-    @OneToMany(cascade = {CascadeType.ALL})
-    private List<ExpectedExpenses> expectedExpensesList;
 
     @ManyToMany(cascade = {CascadeType.ALL})
     private List<Budget> budgetList;
@@ -29,52 +25,18 @@ public class UserAssignmentToGroup {
     @ManyToMany(cascade={CascadeType.PERSIST,CascadeType.REMOVE})
     private List<UserInBudget> listOfMembers;
 
-    private int goal;
+    public History(){
 
-    public UserAssignmentToGroup() {
     }
 
-
-    public UserAssignmentToGroup(List<Budget> budgetList,  String budgetName, String uniqueGroupCode, String budgetStartDate, String budgetEndDate) {
-        this.budgetList = budgetList;
-        this.budgetName = budgetName;
-        this.uniqueGroupCode = uniqueGroupCode;
-        this.budgetStartDate = budgetStartDate;
-        this.budgetEndDate = budgetEndDate;
+    public History(UserAssignmentToGroup userAssignmentToGroup){
+        this.budgetList = userAssignmentToGroup.getBudgetList();
+        this.budgetName = userAssignmentToGroup.getBudgetName();
+        this.uniqueGroupCode = userAssignmentToGroup.getUniqueGroupCode();
+        this.budgetStartDate = userAssignmentToGroup.getBudgetStartDate();
+        this.budgetEndDate = userAssignmentToGroup.getBudgetEndDate();
+        this.listOfMembers = userAssignmentToGroup.getListOfMembers();
     }
-
-    public List<ExpectedExpenses> getExpectedExpensesList() {
-        return expectedExpensesList;
-    }
-
-    public void setExpectedExpensesList(List<ExpectedExpenses> expectedExpensesList) {
-        this.expectedExpensesList = expectedExpensesList;
-    }
-
-    public int getGoal() {
-        return goal;
-    }
-
-    public void setGoal(int goal) {
-        this.goal = goal;
-    }
-
-    public String getBudgetEndDate() {
-        return budgetEndDate;
-    }
-
-    public void setBudgetEndDate(String budgetEndDate) {
-        this.budgetEndDate = budgetEndDate;
-    }
-
-    public String getBudgetStartDate() {
-        return budgetStartDate;
-    }
-
-    public void setBudgetStartDate(String budgetStartDate) {
-        this.budgetStartDate = budgetStartDate;
-    }
-
     public int getId() {
         return id;
     }
@@ -91,7 +53,6 @@ public class UserAssignmentToGroup {
         this.budgetList = budgetList;
     }
 
-
     public String getBudgetName() {
         return budgetName;
     }
@@ -106,6 +67,22 @@ public class UserAssignmentToGroup {
 
     public void setUniqueGroupCode(String uniqueGroupCode) {
         this.uniqueGroupCode = uniqueGroupCode;
+    }
+
+    public String getBudgetStartDate() {
+        return budgetStartDate;
+    }
+
+    public void setBudgetStartDate(String budgetStartDate) {
+        this.budgetStartDate = budgetStartDate;
+    }
+
+    public String getBudgetEndDate() {
+        return budgetEndDate;
+    }
+
+    public void setBudgetEndDate(String budgetEndDate) {
+        this.budgetEndDate = budgetEndDate;
     }
 
     public List<UserInBudget> getListOfMembers() {

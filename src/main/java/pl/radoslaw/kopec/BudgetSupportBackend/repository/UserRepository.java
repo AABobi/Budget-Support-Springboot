@@ -9,9 +9,13 @@ import java.util.List;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
+    List<User> findAll();
+
     List<User> findByNameOrLastname(String name, String lastname);
 
     List<User> findByNameAndLastname(String name, String lastname);
+
+    User findByName(String name);
 
     List<User> findById(int id);
 
@@ -20,4 +24,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     List<User> findByEmail(String email);
 
     List<User> findByUserAssignmentToGroup(UserAssignmentToGroup uatg);
+
+    List<User> findByConfirm(String code);
 }
