@@ -408,6 +408,29 @@ public class UserController {
         return budgetWhatWeWantRemoveADescription;
     }
 
+    @PostMapping(value = "/deleteEntryHistory/{budgetId}")
+    public History deleteEntryHistory(@RequestBody Budget budget, @PathVariable int budgetId) {
+        // Find object from we want to delete a description
+        History history = historyRepository.findByUniqueGroupCode(budget.getUniqueGroupCode());
+        // And find a description (from database) to remove.
+        Budget budgetToRemove = budgetRepository.findById(budgetId).get(0);
+        // List with users what thay have this description
+        List<User> listOfUser = userRepository.findByHistory(history);
+        for (int i = 0; i < listOfUser.size(); i++) {
+            for (History x : listOfUser.get(i).getHistory()) {
+                if (x.equals(history)) {
+                    x.getBudgetList().remove(budgetToRemove);
+                }
+            }
+            userRepository.save(listOfUser.get(i));
+        }
+        history.getBudgetList().remove(budgetToRemove);
+        historyRepository.save(history);
+        budgetRepository.delete(budgetToRemove);
+
+        return history;
+    }
+
     @DeleteMapping("/deleteExpectedEntry/{id}&{code}")
     public UserAssignmentToGroup deleteExpectedEntry(@PathVariable int id, @PathVariable String code) {
 
@@ -428,6 +451,12 @@ public class UserController {
         deleteBudgetMethodForAll(userAssignmentToGroup);
     }
 
+    @PostMapping("/deleteHistoryEntry/{nickname}")
+    public List<History> deleteHistoryEntry(@PathVariable String nickname, @RequestBody History history){
+       List<User> findUser = userRepository.findByNickname(nickname);
+
+       return deleteHistoryForALlUsers(history, findUser.get(0));
+    }
 
     //Probably to change
     @PostMapping({"/findAllBudgetsOfUser"})
@@ -445,10 +474,10 @@ public class UserController {
     }
 
     //Return user with list of budgets. This method returns all all entries included in
-    @PostMapping({"/findUser"})
-    public User findUser(@RequestBody User user) {
-        System.out.println("finduser");
-        List<User> findUser = userRepository.findByNickname(user.getNickname());
+    @GetMapping({"/findUser/{nickname}"})
+    public User findUser(@PathVariable String nickname) {
+        List<User> findUser = userRepository.findByNickname(nickname);
+        //TODO if no result
         return findUser.get(0);
     }
 
@@ -486,11 +515,21 @@ public class UserController {
             }
             return findBudget.get(0);
         }*/
-       if(findBudget != null) {
+      /* if(findBudget != null) {
            return findBudget.get(0);
        }else{
            return null;
-       }
+       }*/
+
+        if(findBudget != null){
+            switch(findBudget.size()){
+                case 1:{
+                    return findBudget.get(0);
+                }
+            }
+
+        }
+        return null;
     }
 
     @GetMapping({"/firstConn"})
@@ -588,10 +627,8 @@ public class UserController {
 
         for(UserAssignmentToGroup x: user.getUserAssignmentToGroup()){
             if(x.getBudgetEndDate() != null) {
-                System.out.println("one");
                 endDate = new SimpleDateFormat("yyyy-MM-dd").parse(x.getBudgetEndDate());
                 if(todayDate.after(endDate)) {
-                    System.out.println("methoda?");
                     budgetToHistoryForAllMembers(x);
                 }
             }
@@ -673,6 +710,18 @@ public class UserController {
         return "Congratulations! Your mail has been send to the user.";
     }
 
+    public List<History> deleteHistoryForALlUsers(History h, User user){
+
+         History history = historyRepository.findByUniqueGroupCode(h.getUniqueGroupCode());
+
+         List<User> howManyUsersBelongsToThisHistory = userRepository.findByHistory(history);
+
+         user.getHistory().remove(history);
+         userRepository.save(user);
+
+         return user.getHistory();
+    }
+
     public void deleteBudgetMethodForAll(UserAssignmentToGroup userAssignmentToGroup){
         boolean checker = false;
         UserAssignmentToGroup newUserAssignmentToGroup = userAssignmentToGroupRepository.findByUniqueGroupCode(userAssignmentToGroup.getUniqueGroupCode()).get(0);
@@ -743,10 +792,13 @@ public class UserController {
             }else{
                 m.getHistory().add(historyRepository.findByUniqueGroupCode(history.getUniqueGroupCode()));
                 m.getUserAssignmentToGroup().remove(testList.get(0));
+                System.out.println(m.getHistory().size());
+                System.out.println(m.getNickname());
                 userRepository.save(m);
             }
         }
 
         userAssignmentToGroupRepository.delete(userAssignmentToGroup);
     }
+
 }
