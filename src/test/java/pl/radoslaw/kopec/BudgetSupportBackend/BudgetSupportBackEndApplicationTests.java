@@ -10,4 +10,9 @@ class BudgetSupportBackEndApplicationTests {
 	void contextLoads() {
 	}
 
+	@Test
+	void newTest(){
+
+	}
+
 }
