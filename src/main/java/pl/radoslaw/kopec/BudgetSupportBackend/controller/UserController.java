@@ -500,7 +500,9 @@ public class UserController {
         if (findBudget.size() != 0) {
             return findBudget.get(0);
         }
-        return null;
+        UserAssignmentToGroup us = new UserAssignmentToGroup();
+        us.setUniqueGroupCode("NE");
+        return us;
     }
 
     @GetMapping("/findBudgetForListOfMembers/{code}&{nickname}")
