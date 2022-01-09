@@ -13,4 +13,8 @@ public interface UserAssignmentToGroupRepository extends JpaRepository<UserAssig
 
     List<UserAssignmentToGroup> findById(int id);
 
+    /*List<UserAssignmentToGroup> findAll(){
+        return
+    };*/
+
 }

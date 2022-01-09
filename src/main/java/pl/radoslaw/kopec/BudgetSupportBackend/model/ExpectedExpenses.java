@@ -33,6 +33,15 @@ public class ExpectedExpenses {
         this.userName = b.userName;
     }
 
+    public ExpectedExpenses(String description, int value, String date, String budgetName, String randomUniqueCodeForBudget, String userName) {
+        this.value = value;
+        this.date = date;
+        this.description = description;
+        this.budgetName = budgetName;
+        this.uniqueGroupCode = randomUniqueCodeForBudget;
+        this.userName = userName;
+    }
+
     public ExpectedExpenses(String description, String budgetName, String randomUniqueCodeForBudget, String userName) {
         this.description = description;
         this.budgetName = budgetName;

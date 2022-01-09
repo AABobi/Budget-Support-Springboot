@@ -111,11 +111,5 @@ public class Budget {
         this.budgetName = budgetName;
     }
 
-    public String getUser() {
-        return userName;
-    }
 
-    public void setUser(String userName) {
-        this.userName = userName;
-    }
 }

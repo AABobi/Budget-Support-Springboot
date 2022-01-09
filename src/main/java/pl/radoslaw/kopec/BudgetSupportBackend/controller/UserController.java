@@ -48,6 +48,92 @@ public class UserController {
     //private Object ResponseEntity;
 
 
+    @PostMapping("/zob")
+    public UserAssignmentToGroup zob(){
+        User user = new User();
+        user.setEmail("radoslawkopec93@gmail.com");
+        user.setLastname("Kopec");
+        user.setName("Radoslaw");
+        user.setNickname("radokop");
+        Password password = new Password();
+        password.setPassword("radokop");
+        user.setPassword(password);
+        user.setConfirm("Confirm");
+        List<UserAssignmentToGroup> newGroupList = new LinkedList<>();
+        user.setUserAssignmentToGroup(newGroupList);
+
+        UserInBudget userInBudget = new UserInBudget();
+        userInBudget.setNickname("radokop");
+        Budget budget = new Budget();
+        budget.setUserName("qweqweqwe");
+        budget.setBudgetName("Test1Budget");
+        budget.setValue(11);
+        budget.setDescription("ValueForTest");
+        budget.setUniqueGroupCode("12345");
+
+        List<Budget> budgetListForUserAssignment = new LinkedList<>();
+        budgetListForUserAssignment.add(budget);
+
+        String randomUniqueCodeForBudget = "12345";
+        List<ExpectedExpenses> expectedExpensesList = new LinkedList<>();
+
+
+        UserAssignmentToGroup userAssignmentToGroup =
+                new UserAssignmentToGroup(budgetListForUserAssignment, "Test1Budget", randomUniqueCodeForBudget, "2022-01-0", "2022-01-31");
+        List<UserInBudget> listOfUsersForUatg = userInBudgetRepository.findByNickname("radokop");
+        userAssignmentToGroup.setListOfMembers(listOfUsersForUatg);
+
+        user.getUserAssignmentToGroup().add(userAssignmentToGroup);
+
+        userAssignmentToGroup.setExpectedExpensesList(expectedExpensesList);
+        Permission permission1 = new Permission();
+        // All without remove group and can't make permission one nad two to new members
+        Permission permission2 = new Permission();
+        // can only remove own description, add new and leave
+        Permission permission3 = new Permission();
+
+        permission1.setUniqueGroupCode(randomUniqueCodeForBudget);
+        permission1.setTypeOfPermission(1);
+
+        permission2.setUniqueGroupCode(randomUniqueCodeForBudget);
+        permission2.setTypeOfPermission(2);
+
+        permission3.setUniqueGroupCode(randomUniqueCodeForBudget);
+        permission3.setTypeOfPermission(3);
+
+        permissionRepository.save(permission1);
+        permissionRepository.save(permission2);
+        permissionRepository.save(permission3);
+
+        if (user.getPermission() == null) {
+            List<Permission> permissionsList = new LinkedList<>();
+            permissionsList.add(permission1);
+        } else {
+            user.getPermission().add(permission1);
+        }
+        userInBudgetRepository.save(userInBudget);
+        userRepository.save(user);
+
+
+
+        User user2 = new User();
+        user2.setEmail("radekopec@gmail.com");
+        user2.setLastname("Niekop");
+        user2.setName("Jaroslaw");
+        user2.setNickname("Jaronie");
+        Password password1 = new Password();
+        password1.setPassword("Jaronie");
+        user2.setPassword(password1);
+        user2.setConfirm("Confirm");
+
+        UserInBudget userInBudget2 = new UserInBudget();
+        userInBudget2.setNickname("Jaronie");
+        userInBudgetRepository.save(userInBudget2);
+        userRepository.save(user2);
+
+        return userAssignmentToGroup;
+    }
+
     @GetMapping("/findAllTest")
     public User findAllTest(@RequestBody User user){
        /* User user = new User("qwe","lastname");
@@ -77,19 +163,7 @@ public class UserController {
         }
 
         userAssignmentToGroupRepository.save(userAssignmentToGroup);
-
-       /* List<User> findUserBelongsToTheBudget = userRepository.findByUserAssignmentToGroup(userAssignmentToGroup);
-        try{
-            for(int i = 0; i < findUserBelongsToTheBudget.size(); i++){
-                for(UserAssignmentToGroup x : findUserBelongsToTheBudget.get(i).getUserAssignmentToGroup()){
-                    if(x.equals(userAssignmentToGroup)){
-                    }
-                }
-            }
-        }catch(IndexOutOfBoundsException e){
-
-        }*/
-        return null;
+        return userAssignmentToGroup;
     }
 
     @PostMapping("/addExpectedExpensesToDescription/{nickname}")
@@ -105,23 +179,21 @@ public class UserController {
         String formatted = format1.format(cal.getTime());
 
         budget.setDate(formatted);
-
+        ExpectedExpenses expectedExpensesDatabase = expectedExpensesRepository.findById(expectedExpenses.getId()).get(0);
         if(findUser != null){
             for(UserAssignmentToGroup x: findUser.get(0).getUserAssignmentToGroup()){
                 if(x.getUniqueGroupCode().equals(expectedExpenses.getUniqueGroupCode())){
                     x.getBudgetList().add(budget);
-                    for(ExpectedExpenses ex: x.getExpectedExpensesList()){
-                       if(ex.getUniqueGroupCode().equals(expectedExpenses.getUniqueGroupCode())){
-                           x.getExpectedExpensesList().remove(ex);
-                           break;
-                       }
-                    }
+                    x.getExpectedExpensesList().remove(expectedExpensesDatabase);
+                    expectedExpensesRepository.delete(expectedExpenses);
                     break;
                 }
             }
 
         }
+
          userRepository.save(findUser.get(0));
+
 
     }
 
@@ -169,20 +241,25 @@ public class UserController {
         String formatted = format1.format(cal.getTime());
         try {
             // Add date to the last object in list.e
+
             userAssignmentToGroup.getBudgetList().get(userAssignmentToGroup.getBudgetList().size() - 1).setDate(formatted);
+
             budgetRepository.save(userAssignmentToGroup.getBudgetList().get(userAssignmentToGroup.getBudgetList().size() - 1));
+
             userAssignmentToGroupRepository.save(userAssignmentToGroup);
-            return userAssignmentToGroup;
         } catch (IndexOutOfBoundsException e) {
+
             System.out.println(e);
         }
-        return null;
+        return userAssignmentToGroup;
     }
 
     @GetMapping("/countTheDays/{year}&{month}")
     public List<Integer> countTheDays(@PathVariable int year, @PathVariable String month) {
         YearMonth yearMonthObject = YearMonth.of(year, Integer.parseInt(month));
+        System.out.println(yearMonthObject+ " co tototo");
         int daysInMonth = yearMonthObject.lengthOfMonth();
+        System.out.println(daysInMonth+"    i to");
         List<Integer> test = new LinkedList<>();
         test.add(null);
         for (int i = 1; i < daysInMonth+1; i++) {
@@ -214,8 +291,6 @@ public class UserController {
 
 
         List<UserInBudget> listOfUsersForUatg = userInBudgetRepository.findByNickname(arrayWithInformationAboutNewBudget[1]);
-        System.out.println(listOfUsersForUatg.size()+"uib size");
-        System.out.println(listOfUsersForUatg.get(0));
         //listOfUsersForUatg.add(userInBudgetRepository.findByNickname(arrayWithInformationAboutNewBudget[1]).get(0));
         userAssignmentToGroup.setListOfMembers(listOfUsersForUatg);
         if (findUser.get(0).getUserAssignmentToGroup() != null) {
@@ -253,23 +328,32 @@ public class UserController {
             findUser.get(0).getPermission().add(permission1);
         }
         userRepository.save(findUser.get(0));
+
         String[] message = new String[1];
         message[0] = "Budget created";
+
         return message;
 
     }
 
     @GetMapping("/checkPermission/{uniqueCode}&{nickname}")
     public Permission checkPermission(@PathVariable String uniqueCode, @PathVariable String nickname) {
+        System.out.println(nickname);
+        System.out.println(uniqueCode);
         List<User> findUser = userRepository.findByNickname(nickname);
-        if (findUser != null) {
+        System.out.println(findUser.size());
+        if (findUser.size() > 0) {
             for (Permission x : findUser.get(0).getPermission()) {
                 if (x.getUniqueGroupCode().equals(uniqueCode)) {
+                    System.out.println("found");
                     return x;
                 }
             }
         }
-        return null;
+        Permission permission = new Permission();
+        permission.setTypeOfPermission(404);
+        return permission;
+
     }
 
     //Simple login to application.

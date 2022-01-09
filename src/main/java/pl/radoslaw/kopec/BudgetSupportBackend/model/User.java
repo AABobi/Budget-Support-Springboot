@@ -1,5 +1,6 @@
 package pl.radoslaw.kopec.BudgetSupportBackend.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -21,8 +22,10 @@ public class User {
     @OneToOne(cascade = {CascadeType.ALL})
     private Password password;
 
+
     @ManyToMany(cascade = {CascadeType.ALL})
     private List<UserAssignmentToGroup> userAssignmentToGroup;
+
 
     @ManyToMany(cascade = {CascadeType.ALL})
     private List<History> history;
@@ -46,6 +49,14 @@ public class User {
         this.nickname = nickname;
         this.email = email;
         this.confirm = confirm;
+    }
+
+    public User(String nickname, String name, String lastname, String email, Password password) {
+        this.name = name;
+        this.lastname = lastname;
+        this.nickname = nickname;
+        this.email = email;
+        this.password = password;
     }
 
     public User(User user) {

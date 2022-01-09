@@ -1,6 +1,11 @@
 package pl.radoslaw.kopec.BudgetSupportBackend.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import javax.persistence.*;
 import java.util.List;
 
@@ -12,7 +17,8 @@ public class UserAssignmentToGroup {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @OneToMany(cascade = {CascadeType.ALL})
+
+    @ManyToMany(cascade = {CascadeType.ALL})
     private List<ExpectedExpenses> expectedExpensesList;
 
     @ManyToMany(cascade = {CascadeType.ALL})
@@ -34,6 +40,14 @@ public class UserAssignmentToGroup {
     public UserAssignmentToGroup() {
     }
 
+    public UserAssignmentToGroup(UserAssignmentToGroup u){
+        this.expectedExpensesList = u.expectedExpensesList;
+        this.budgetList = u.getBudgetList();
+        this.budgetName = u.getBudgetName();
+        this.uniqueGroupCode = u.getUniqueGroupCode();
+        this.budgetStartDate = u.getBudgetStartDate();
+        this.budgetEndDate = u.getBudgetEndDate();
+    }
 
     public UserAssignmentToGroup(List<Budget> budgetList,  String budgetName, String uniqueGroupCode, String budgetStartDate, String budgetEndDate) {
         this.budgetList = budgetList;
