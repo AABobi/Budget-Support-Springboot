@@ -100,7 +100,13 @@ public class ClassTest {
 
         String randomUniqueCodeForBudget = "12345";
         List<ExpectedExpenses> expectedExpensesList = new LinkedList<>();
-
+        ExpectedExpenses expectedExpenses = new ExpectedExpenses();
+        expectedExpenses.setUniqueGroupCode(randomUniqueCodeForBudget);
+        expectedExpenses.setBudgetName("Test1Budget");
+        expectedExpenses.setDate("2022-01-30");
+        expectedExpenses.setDescription("Water bill");
+        expectedExpenses.setValue(100);
+        expectedExpensesList.add(expectedExpenses);
 
         UserAssignmentToGroup userAssignmentToGroup =
                 new UserAssignmentToGroup(budgetListForUserAssignment, "Test1Budget", randomUniqueCodeForBudget, "2022-01-0", "2022-01-31");
@@ -125,6 +131,28 @@ public class ClassTest {
         permission3.setUniqueGroupCode(randomUniqueCodeForBudget);
         permission3.setTypeOfPermission(3);
 
+        Budget budget = new Budget();
+        budget.setUserName("radokop");
+        budget.setBudgetName("Test2History");
+        budget.setValue(11);
+        budget.setDescription("ValueForTest");
+        budget.setUniqueGroupCode("123456");
+        //budgetRepository.save(budget);
+
+        List<Budget> listOfBudgetsForHistory = List.of(budget);
+        History history = new History();
+        history.setBudgetName("Test2History");
+        history.setUniqueGroupCode("123456");
+        history.setBudgetStartDate("2022-01-01");
+        history.setBudgetEndDate("2022-01-09");
+        history.setBudgetList(listOfBudgetsForHistory);
+        ///historyRepository.save(history);
+
+        List<History> listOfHistory = List.of(history);
+        user.setHistory(listOfHistory);
+
+
+
        // permissionRepository.save(permission1);
         permissionRepository.save(permission2);
         permissionRepository.save(permission3);
@@ -146,18 +174,161 @@ public class ClassTest {
         Password password1 = new Password();
         password1.setPassword("Jaronie");
         user2.setPassword(password1);
-        user2.setConfirm("Confirm");
+        user2.setConfirm("12345");
 
         UserInBudget userInBudget2 = new UserInBudget();
         userInBudget2.setNickname("Jaronie");
         userInBudgetRepository.save(userInBudget2);
         userRepository.save(user2);
+    }
+   //TODO leaveTheGroup method
+    @Test
+    public void shouldReturnUserWithOneHistoryMoreAndOneUserAssignmentToGroupLess() throws Exception {
+        MvcResult findUser = mockMvc.perform(get("/findUser/radokop").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String userJson = findUser.getResponse().getContentAsString();
+        User user = new ObjectMapper().readValue(userJson, User.class);
+        user.getUserAssignmentToGroup().get(0).setBudgetEndDate("2022-01-02");
+        String userJson2 = objectMapper.writeValueAsString(user);
+
+
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/moveGroupToTheHistory").contentType(MediaType.APPLICATION_JSON).content(userJson2))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userAssignmentToGroup", hasSize(0)));
+    }
+
+
+   /* @Test
+    public void deleteHistoryEntry() throws Exception{
+        MvcResult findHistory = mockMvc.perform(get("/findHistory/123456").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.uniqueGroupCode", Matchers.is("123456")))
+                .andReturn();
+
+        String findHistoryResponse = findHistory.getResponse().getContentAsString();
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/deleteHistoryEntry/radokop").contentType(MediaType.APPLICATION_JSON).content(findHistoryResponse))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$",hasSize(0)));
 
 
     }
-    
+
+    @Test
+    public void shouldReturnOkMessageAfterDeleteBudget() throws Exception{
+        UserAssignmentToGroup userAssignmentToGroup = userAssignmentToGroupRepository.findByUniqueGroupCode("12345").get(0);
+        userAssignmentToGroup.setExpectedExpensesList(expectedExpensesRepository.findByUniqueGroupCode("12345"));
+        userAssignmentToGroup.setBudgetList(budgetRepository.findByUniqueGroupCode("12345"));
+        userAssignmentToGroup.setListOfMembers(userInBudgetRepository.findByNickname("radokop"));
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json = objectMapper.writeValueAsString(userAssignmentToGroup);
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/deleteBudget").contentType(MediaType.APPLICATION_JSON).content(json))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.[0]", Matchers.is("OK")));
+    }
+    @Test
+    public void shouldReturnUserAssignmentToGroupWithExpectedListRemovedExpectedObject() throws Exception{
+        ExpectedExpenses expectedExpenses = new ExpectedExpenses();
+        expectedExpenses.setUniqueGroupCode("12345");
+        expectedExpenses.setBudgetName("Test1Budget");
+        expectedExpenses.setDate("2022-01-20");
+        expectedExpenses.setDescription("Power bill");
+        expectedExpenses.setValue(200);
+        expectedExpensesRepository.save(expectedExpenses);
+        List<ExpectedExpenses> expectedExpensesList = expectedExpensesRepository.findByUniqueGroupCode("12345");
+
+        UserAssignmentToGroup userAssignmentToGroup = userAssignmentToGroupRepository.findByUniqueGroupCode("12345").get(0);
+        userAssignmentToGroup.setExpectedExpensesList(expectedExpensesList);
+        userAssignmentToGroup.setBudgetList(budgetRepository.findByUniqueGroupCode("12345"));
+        userAssignmentToGroup.setListOfMembers(userInBudgetRepository.findByNickname("radokop"));
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json = objectMapper.writeValueAsString(userAssignmentToGroup);
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/deleteExpectedEntry/"+expectedExpenses.getId()+"&12345").contentType(MediaType.APPLICATION_JSON).content(json))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.expectedExpensesList", hasSize(expectedExpensesList.size()-1)));
+    }
+
+    @Test
+    public void shouldReturnUserAssignmentToGroupWithoutRemovedEntry() throws Exception{
+        Budget budget = new Budget();
+        budget.setUserName("qweqweqwe");
+        budget.setBudgetName("Test1Budget");
+        budget.setValue(11);
+        budget.setDescription("ValueForTest");
+        budget.setUniqueGroupCode("12345");
+        budgetRepository.save(budget);
+
+        List<Budget> budgetsList = budgetRepository.findByUniqueGroupCode("12345");
+        //budgetsList.add(budget);
+
+        List<UserAssignmentToGroup> findGroup = userAssignmentToGroupRepository.findByUniqueGroupCode("12345");
+        findGroup.get(0).setBudgetList(budgetsList);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        String json = objectMapper.writeValueAsString(budget);
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/deleteEntry/"+budget.getId()).contentType(MediaType.APPLICATION_JSON).content(json))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.budgetList", hasSize(budgetsList.size()-1)));
+
+        assertTrue(budgetRepository.findByUniqueGroupCode("12345").size() < budgetsList.size());
+
+    }*/
+
 
    /* @Test
+    public void shouldReturnHistoryWithoutBudget() throws Exception {
+        Budget budget = new Budget();
+        budget.setUserName("radokop");
+        budget.setBudgetName("Test2History");
+        budget.setValue(1234);
+        budget.setDescription("SecondValueTest");
+        budget.setUniqueGroupCode("123456");
+        budgetRepository.save(budget);
+
+        int listOfBudgetsSize = budgetRepository.findByUniqueGroupCode("123456").size();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json = objectMapper.writeValueAsString(budget);
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/deleteEntryHistory/"+budget.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.budgetList", hasSize(listOfBudgetsSize-1)));
+
+        //assertTrue(budgetRepository.findByUniqueGroupCode("12345").size() < budgetsList.size());
+    }*/
+
+   /* @Test
+    public void shouldReturnProblemWithActivateYourAccountMakeContactWithAdministrator() throws Exception{
+        String stringToJson = "12345";
+
+        mockMvc.perform(put("/confirmUser").contentType(MediaType.APPLICATION_JSON).content(stringToJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.[0]", Matchers.is("Account confirmed")));
+    }
+
+
+    @Test
+    public void shouldReturnAccountConfirmedMessage() throws Exception{
+        String stringToJson = "Confirm";
+
+        mockMvc.perform(put("/confirmUser").contentType(MediaType.APPLICATION_JSON).content(stringToJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.[0]", Matchers.is("Account confirmed")));
+    }
+
+   @Test
     public void shouldReturnMessageCreated() throws Exception{
         Password password = new Password("qwerty12");
         User user = new User("Testnickname", "Testname", "Testlastname", "radekopec16@gmail.com", password);
@@ -355,6 +526,7 @@ public class ClassTest {
         userInBudgetRepository.deleteAll();
         userAssignmentToGroupRepository.deleteAll();
         expectedExpensesRepository.deleteAll();
+        historyRepository.deleteAll();
         budgetRepository.deleteAll();
     }
 
