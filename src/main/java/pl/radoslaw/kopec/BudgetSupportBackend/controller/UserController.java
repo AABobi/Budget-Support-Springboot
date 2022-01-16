@@ -13,6 +13,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.YearMonth;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @CrossOrigin(
         origins = {"http://localhost:4200"}
@@ -49,7 +50,7 @@ public class UserController {
 
 
     @PostMapping("/zob")
-    public UserAssignmentToGroup zob(){
+    public UserAssignmentToGroup zob() throws Exception {
         User user = new User();
         user.setEmail("radoslawkopec93@gmail.com");
         user.setLastname("Kopec");
@@ -235,6 +236,7 @@ public class UserController {
     @PostMapping({"/addDescriptionToTheBudget"})
     public UserAssignmentToGroup addDescriptionToTheBudget(@RequestBody UserAssignmentToGroup userAssignmentToGroup) {
         // Date to string.
+        System.out.println("1");
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, 1);
         SimpleDateFormat format1 = new SimpleDateFormat("yyyy-MM-dd HH:mm");
@@ -247,6 +249,7 @@ public class UserController {
             budgetRepository.save(userAssignmentToGroup.getBudgetList().get(userAssignmentToGroup.getBudgetList().size() - 1));
 
             userAssignmentToGroupRepository.save(userAssignmentToGroup);
+
         } catch (IndexOutOfBoundsException e) {
 
             System.out.println(e);
@@ -359,12 +362,16 @@ public class UserController {
     //Simple login to application.
     //Will be overwriting soon
     @PostMapping({"/checkLogin"})
-    public User checkLogin(@RequestBody User userPass) {
+    public User checkLogin(@RequestBody User userPass) throws Exception {
         List<User> listForFindUserToLogin = new LinkedList<>(userRepository.findByNickname(userPass.getNickname()));
         User returnUser;
         if (listForFindUserToLogin.size() > 0 && listForFindUserToLogin.get(0).getPassword().getPassword().equals(userPass.getPassword().getPassword())
                 && listForFindUserToLogin.get(0).getConfirm().equals("Confirm")) {
             returnUser = new User(listForFindUserToLogin.get(0));
+            System.out.println(returnUser.getRole());
+            System.out.println(listForFindUserToLogin.get(0).getNickname());
+            System.out.println(listForFindUserToLogin.get(0).getRole());
+            System.out.println(listForFindUserToLogin.get(0).getEmail());
             return returnUser;
         } else {
             return returnUser = new User("NC", "NC");
@@ -373,7 +380,7 @@ public class UserController {
     }
 
     @PostMapping({"/createFastTwojAccount"})
-    public void createTwoAccount() {
+    public void createTwoAccount() throws Exception {
         System.out.println("works");
         User user = new User();
         User user2 = new User();
@@ -390,6 +397,7 @@ public class UserController {
         userInBudget.setNickname("qwe");
         List<Permission> listToSetItInNewUser = new LinkedList<>();
         List<UserAssignmentToGroup> listToSetItInNewUserSecond = new LinkedList<>();
+
         userInBudgetRepository.save(userInBudget);
 
         user2.setEmail("radekopec@gmail.com");
@@ -413,6 +421,8 @@ public class UserController {
         List<History> historyList = new LinkedList<>();
         user.setHistory(historyList);
         user2.setHistory(historyList);
+        user.setRole("ADMIN");
+        user2.setRole("USER");
         userRepository.save(user);
         userRepository.save(user2);
     }
@@ -531,8 +541,8 @@ public class UserController {
 
     //This method get an object uasg (budget to delete) and
     @PostMapping({"/deleteBudget"})
-    public void deleteBudget(@RequestBody UserAssignmentToGroup userAssignmentToGroup) {
-        deleteBudgetMethodForAll(userAssignmentToGroup);
+    public String[] deleteBudget(@RequestBody UserAssignmentToGroup userAssignmentToGroup) {
+        return deleteBudgetMethodForAll(userAssignmentToGroup);
     }
 
     @PostMapping("/deleteHistoryEntry/{nickname}")
@@ -555,6 +565,11 @@ public class UserController {
         List<User> usetList = userRepository.findAll();
         System.out.println(usetList.size());
         return usetList;
+    }
+
+    @GetMapping("/findHistory/{code}")
+    public History findHistory(@PathVariable String code){
+        return historyRepository.findByUniqueGroupCode(code);
     }
 
     //Return user with list of budgets. This method returns all all entries included in
@@ -649,40 +664,102 @@ public class UserController {
 
     //userToFind have only nickname of user and one object to delete (obj represent group what user want to leave).
     @PostMapping({"/leaveTheGroup/{uniqueCode}&{checkMessage}"})
-    public void leaveTheGroup(@RequestBody User user, @PathVariable String uniqueCode, @PathVariable String checkMessage) {
-    if(checkMessage.equals(checkMessage)){
+    public void leaveTheGroup(@RequestBody User user, @PathVariable String uniqueCode) {
+        UserAssignmentToGroup userAssignmentToGroup = userAssignmentToGroupRepository.findByUniqueGroupCode(uniqueCode).get(0);
+
+        User userDatabase = userRepository.findByNickname(user.getNickname()).get(0);
+
+        List<Permission> permissionsList = permissionRepository.findByUniqueGroupCode(uniqueCode);
+        Permission permission = new Permission();
+        for(Permission p: permissionsList){
+            if(p.getTypeOfPermission() == 1){
+                permission = p;
+            }
+        }
+
+        List<User> groupMembers = userRepository.findByUserAssignmentToGroup(userAssignmentToGroup);
+
+
+      if(userAssignmentToGroup.getListOfMembers().size() == 1) {
+          for (Permission x : user.getPermission()) {
+              if (x.getUniqueGroupCode().equals(uniqueCode)) {
+                  user.getPermission().remove(x);
+                  break;
+              }
+          }
+
+          for (UserAssignmentToGroup uax : user.getUserAssignmentToGroup()) {
+              if (uax.getUniqueGroupCode().equals(uniqueCode)) {
+                  for (UserInBudget uib : uax.getListOfMembers()) {
+                      if (uib.getNickname().equals(user.getNickname())) {
+                          uax.getListOfMembers().remove(uib);
+                          break;
+                      }
+                  }
+                  break;
+              }
+          }
+          userRepository.save(user);
+          for (UserAssignmentToGroup x : user.getUserAssignmentToGroup()) {
+              if (x.getUniqueGroupCode().equals(uniqueCode)) {
+                  user.getUserAssignmentToGroup().remove(x);
+                  userRepository.save(user);
+                  break;
+              }
+          }
+          userAssignmentToGroupRepository.delete(userAssignmentToGroup);
+      }else if(userAssignmentToGroup.getListOfMembers().size() > 1){
+          for (Permission x : user.getPermission()) {
+              if (x.getUniqueGroupCode().equals(uniqueCode)) {
+                  user.getPermission().remove(x);
+                  break;
+              }
+          }
+
+          for (UserAssignmentToGroup uax : user.getUserAssignmentToGroup()) {
+              if (uax.getUniqueGroupCode().equals(uniqueCode)) {
+                  for (UserInBudget uib : uax.getListOfMembers()) {
+                      if (uib.getNickname().equals(user.getNickname())) {
+                          uax.getListOfMembers().remove(uib);
+                          break;
+                      }
+                  }
+                  break;
+              }
+          }
+          userRepository.save(user);
+          for (UserAssignmentToGroup x : user.getUserAssignmentToGroup()) {
+              if (x.getUniqueGroupCode().equals(uniqueCode)) {
+                  user.getUserAssignmentToGroup().remove(x);
+                  userRepository.save(user);
+                  break;
+              }
+          }
+          userAssignmentToGroup = userAssignmentToGroupRepository.findByUniqueGroupCode(uniqueCode).get(0);
+
+          List<User> listToGivePermOne = userRepository.findByUserAssignmentToGroup(userAssignmentToGroup);
+          int howManyWithPermOne = 0;
+          for(User u: listToGivePermOne){
+              for(Permission p: u.getPermission()){
+                  if(p.getUniqueGroupCode().equals(uniqueCode)){
+                      if(p.getTypeOfPermission() == 1){
+                          howManyWithPermOne++;
+                      }
+                  }
+              }
+          }
+          if(howManyWithPermOne==0) {
+              for (Permission p1 : listToGivePermOne.get(0).getPermission()) {
+                  if (p1.getUniqueGroupCode().equals(uniqueCode)) {
+                      listToGivePermOne.get(0).getPermission().remove(p1);
+                      listToGivePermOne.get(0).getPermission().add(permission);
+                      userRepository.save(listToGivePermOne.get(0));
+                  }
+              }
+          }
+        }
 
     }
-        for (Permission x : user.getPermission()) {
-            if (x.getUniqueGroupCode().equals(uniqueCode)) {
-                user.getPermission().remove(x);
-                break;
-            }
-        }
-
-        for (UserAssignmentToGroup uax : user.getUserAssignmentToGroup()) {
-            if (uax.getUniqueGroupCode().equals(uniqueCode)) {
-                for (UserInBudget uib : uax.getListOfMembers()) {
-                    if (uib.getNickname().equals(user.getNickname())) {
-                        uax.getListOfMembers().remove(uib);
-                        break;
-                    }
-                }
-                break;
-            }
-        }
-        userRepository.save(user);
-        for (UserAssignmentToGroup x : user.getUserAssignmentToGroup()) {
-            if (x.getUniqueGroupCode().equals(uniqueCode)) {
-                user.getUserAssignmentToGroup().remove(x);
-                userRepository.save(user);
-                break;
-            }
-
-        }
-
-    }
-
 
 
 
@@ -720,8 +797,8 @@ public class UserController {
             }
 
         }
-
-   return  user;
+     User userAfterAll = userRepository.findByNickname(user.getNickname()).get(0);
+   return  userAfterAll;
 
     }
 
@@ -808,7 +885,7 @@ public class UserController {
          return user.getHistory();
     }
 
-    public void deleteBudgetMethodForAll(UserAssignmentToGroup userAssignmentToGroup){
+    public String[] deleteBudgetMethodForAll(UserAssignmentToGroup userAssignmentToGroup){
         boolean checker = false;
         UserAssignmentToGroup newUserAssignmentToGroup = userAssignmentToGroupRepository.findByUniqueGroupCode(userAssignmentToGroup.getUniqueGroupCode()).get(0);
 
@@ -859,6 +936,10 @@ public class UserController {
             budgetRepository.delete(budgets.get(i));
         }
         userAssignmentToGroupRepository.delete(newUserAssignmentToGroup);
+
+        String[] message = {"OK"};
+        return message;
+
     }
 
     public void budgetToHistoryForAllMembers(UserAssignmentToGroup userAssignmentToGroup){

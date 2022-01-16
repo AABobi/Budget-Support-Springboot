@@ -80,7 +80,7 @@ public class ClassTest {
     private HistoryRepository historyRepository;
 
     @BeforeEach
-    public void fillDatabase(){
+    public void fillDatabase() throws Exception {
         User user = new User();
         user.setEmail("radoslawkopec93@gmail.com");
         user.setLastname("Kopec");
@@ -188,22 +188,31 @@ public class ClassTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
+
+
         ObjectMapper objectMapper = new ObjectMapper();
         String userJson = findUser.getResponse().getContentAsString();
         User user = new ObjectMapper().readValue(userJson, User.class);
         user.getUserAssignmentToGroup().get(0).setBudgetEndDate("2022-01-02");
+
+        System.out.println("user "+user.getHistory().size());
+        System.out.println("user "+user.getUserAssignmentToGroup().size());
         String userJson2 = objectMapper.writeValueAsString(user);
 
 
 
         mockMvc.perform(MockMvcRequestBuilders.post("/moveGroupToTheHistory").contentType(MediaType.APPLICATION_JSON).content(userJson2))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.userAssignmentToGroup", hasSize(0)));
+                .andExpect(jsonPath("$.userAssignmentToGroup", hasSize(0)))
+                .andExpect(jsonPath("$.history", hasSize(2)));
     }
 
 
-   /* @Test
-    public void deleteHistoryEntry() throws Exception{
+
+
+
+    @Test
+    public void shouldReturnListWithHistoryObjectsWithOneLessObject() throws Exception{
         MvcResult findHistory = mockMvc.perform(get("/findHistory/123456").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.uniqueGroupCode", Matchers.is("123456")))
@@ -214,7 +223,6 @@ public class ClassTest {
         mockMvc.perform(MockMvcRequestBuilders.post("/deleteHistoryEntry/radokop").contentType(MediaType.APPLICATION_JSON).content(findHistoryResponse))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$",hasSize(0)));
-
 
     }
 
@@ -282,10 +290,10 @@ public class ClassTest {
 
         assertTrue(budgetRepository.findByUniqueGroupCode("12345").size() < budgetsList.size());
 
-    }*/
+    }
 
 
-   /* @Test
+    @Test
     public void shouldReturnHistoryWithoutBudget() throws Exception {
         Budget budget = new Budget();
         budget.setUserName("radokop");
@@ -307,9 +315,9 @@ public class ClassTest {
                         .andExpect(jsonPath("$.budgetList", hasSize(listOfBudgetsSize-1)));
 
         //assertTrue(budgetRepository.findByUniqueGroupCode("12345").size() < budgetsList.size());
-    }*/
+    }
 
-   /* @Test
+    @Test
     public void shouldReturnProblemWithActivateYourAccountMakeContactWithAdministrator() throws Exception{
         String stringToJson = "12345";
 
@@ -367,9 +375,9 @@ public class ClassTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.typeOfPermission", Matchers.is(1)));
     }
-*/
 
-   // @Test
+
+    @Test
     public void testShouldCreateNewBudget() throws Exception {
         User user = new User();
         user.setEmail("radoslawkopec93@gmail.com");
@@ -405,7 +413,7 @@ public class ClassTest {
        assertEquals("Budget created", id);*/
     }
 
-   // @Test
+   @Test
     public void shouldCreateListOfIntegerWithDaysInTheMonth() throws Exception{
         mockMvc.perform(get("/countTheDays/2022&05").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -413,7 +421,7 @@ public class ClassTest {
                 .andExpect(jsonPath("$[31]", Matchers.is(31)));
     }
 
-   // @Test
+   @Test
     public void shouldAddDescriptionToTheBudgetList() throws Exception{
         Budget budget = new Budget();
         budget.setUserName("qweqweqwe");
@@ -427,7 +435,9 @@ public class ClassTest {
 
         UserAssignmentToGroup userAssignmentToGroup = new UserAssignmentToGroup(userAssignmentToGroupRepository.findAll().get(0));
         userAssignmentToGroup.setBudgetList(budgetsList);
-        userAssignmentToGroup.setExpectedExpensesList(expectedExpensesRepository.findAll());
+        //Can change to normal list
+        userAssignmentToGroup.setExpectedExpensesList(null);
+        userAssignmentToGroup.setListOfMembers(null);
 
         ObjectMapper objectMapper = new ObjectMapper();
         String json = objectMapper.writeValueAsString(userAssignmentToGroup);
@@ -441,7 +451,7 @@ public class ClassTest {
 
     }
 
-   // @Test
+   @Test
     public void shouldCreateExpectedExpenses() throws  Exception {
         ExpectedExpenses expectedExpenses = new ExpectedExpenses("Bread", 10,"2022-01-12","Test1Budget","12345","Radoslaw");
 
@@ -452,10 +462,10 @@ public class ClassTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.expectedExpensesList", hasSize(1)));
+                .andExpect(jsonPath("$.expectedExpensesList", hasSize(2)));
     }
 
-    //@Test
+    @Test
     public void shouldMoveExpectedExpensesToDescription() throws Exception {
         ExpectedExpenses expectedExpenses = new ExpectedExpenses("Bread", 10,"2022-01-12","Test1Budget","12345","Radoslaw");
 
@@ -466,7 +476,7 @@ public class ClassTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.expectedExpensesList", hasSize(1)));
+                .andExpect(jsonPath("$.expectedExpensesList", hasSize(2)));
 
         Integer expectedExpensesObjects = expectedExpensesRepository.findAll().size();
         Integer budgetDescritpion = budgetRepository.findAll().size();
@@ -484,7 +494,7 @@ public class ClassTest {
         assertTrue(budgetDescritpion < budgetRepository.findAll().size());
     }
 
-   // @Test
+   @Test
     public void showFindAllUser() throws Exception {
         mockMvc.perform(get("/findAll")
                 .contentType(MediaType.valueOf("application/json")))
@@ -492,7 +502,7 @@ public class ClassTest {
                 .andExpect(jsonPath("$" , hasSize(2)));
     }
 
-   // @Test
+   @Test
     public void testFindEmailIfExist() throws Exception {
         MvcResult result = mockMvc.perform(get("/findEmail/{email}", "radoslawkopec93@gmail.com")
                 .contentType(MediaType.valueOf("application/json")))
@@ -505,7 +515,7 @@ public class ClassTest {
        String id = JsonPath.parse(resultString).read("$.[0]");
        assertEquals("Found", id);
     }
-    //@Test
+    @Test
     public void testFindEmailIfDoesntExist() throws Exception {
         MvcResult result = mockMvc.perform(get("/findEmail/{email}", "radoslawasdsadsadsa3@gmail.com")
                 .contentType(MediaType.valueOf("application/json")))

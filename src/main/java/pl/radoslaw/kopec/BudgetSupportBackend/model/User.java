@@ -18,6 +18,7 @@ public class User {
     private String lastname;
     private String email;
     private String confirm;
+    private String role;
 
     @OneToOne(cascade = {CascadeType.ALL})
     private Password password;
@@ -30,7 +31,7 @@ public class User {
     @ManyToMany(cascade = {CascadeType.ALL})
     private List<History> history;
 
-    @OneToMany(cascade = {CascadeType.ALL})
+    @ManyToMany(cascade = {CascadeType.ALL})
     private List<Permission> permission;
 
     public User() {
@@ -69,6 +70,7 @@ public class User {
         this.userAssignmentToGroup = user.userAssignmentToGroup;
         this.permission = user.permission;
         this.confirm = user.confirm;
+        this.role = user.role;
     }
 
     public User(String nickname, String name, String email, String lastname) {
@@ -157,5 +159,13 @@ public class User {
 
     public void setHistory(List<History> history) {
         this.history = history;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }

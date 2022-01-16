@@ -107,7 +107,7 @@ public class ClassForTestTests {
     private HistoryRepository historyRepository;
 
     @BeforeEach
-    public void fillDatabase(){
+    public void fillDatabase() throws Exception {
         User user = new User();
         user.setEmail("radoslawkopec93@gmail.com");
         user.setLastname("Kopec");
@@ -192,7 +192,34 @@ public class ClassForTestTests {
 
     }
 
+    @Test
+    public void shouldAddDescriptionToTheBudgetList() throws Exception{
+        Budget budget = new Budget();
+        budget.setUserName("qweqweqwe");
+        budget.setBudgetName("Test1Budget");
+        budget.setValue(11);
+        budget.setDescription("ValueForTest");
+        budget.setUniqueGroupCode("12345");
 
+        List<Budget> budgetsList = budgetRepository.findByUniqueGroupCode("12345");
+        budgetsList.add(budget);
+
+        UserAssignmentToGroup userAssignmentToGroup = new UserAssignmentToGroup(userAssignmentToGroupRepository.findAll().get(0));
+        userAssignmentToGroup.setBudgetList(budgetsList);
+        userAssignmentToGroup.setExpectedExpensesList(expectedExpensesRepository.findByUniqueGroupCode("12345"));
+        userAssignmentToGroup.setListOfMembers(userInBudgetRepository.findByNickname("radokop"));
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json = objectMapper.writeValueAsString(userAssignmentToGroup);
+
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/addDescriptionToTheBudget")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+                .andExpect(status().isOk());
+        //.andExpect(jsonPath("$.budgetList",hasSize(1)));
+
+    }
     @AfterEach
     public void clearDataBase() throws Exception{
         userRepository.deleteAll();
