@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 )
 @RestController
 @RequestMapping({"/"})
-public class UserController {
+public class Controller {
 
     @Autowired
     public UserRepository userRepository;
@@ -202,16 +202,20 @@ public class UserController {
     @PostMapping("/addNewMemberToTheBudget/{code}")
     public String[] addNewMemberToTheBudget(@RequestBody User user, @PathVariable String code) {
         String[] message = new String[1];
-        User findUserForCheckIfHeBelongsToThisBudget = userRepository.findByNickname(user.getNickname()).get(0);
-        if(findUserForCheckIfHeBelongsToThisBudget.getUserAssignmentToGroup().size() > 0){
-            for(UserAssignmentToGroup x : findUserForCheckIfHeBelongsToThisBudget.getUserAssignmentToGroup()){
-                if(x.getUniqueGroupCode().equals(code)){
-                    message[0] = "This user belongs to this budget";
-                    return message;
+        List<User> findUserForCheckIfHeBelongsToThisBudget = userRepository.findByNickname(user.getNickname());
+        if(findUserForCheckIfHeBelongsToThisBudget.size() == 0){
+            message[0] = "Doesn't exist";
+            return message;
+        }else {
+            if (findUserForCheckIfHeBelongsToThisBudget.get(0).getUserAssignmentToGroup().size() > 0) {
+                for (UserAssignmentToGroup x : findUserForCheckIfHeBelongsToThisBudget.get(0).getUserAssignmentToGroup()) {
+                    if (x.getUniqueGroupCode().equals(code)) {
+                        message[0] = "This user belongs to this budget";
+                        return message;
+                    }
                 }
             }
         }
-
         User dbUser = userRepository.findByNickname(user.getNickname()).get(0);
         Permission findPermission = permissionRepository.findByUniqueGroupCodeAndTypeOfPermission(code, 3).get(0);
         UserInBudget userInBudget = userInBudgetRepository.findByNickname(user.getNickname()).get(0);
@@ -235,14 +239,11 @@ public class UserController {
     //Not finished yet
     @PostMapping({"/addDescriptionToTheBudget"})
     public UserAssignmentToGroup addDescriptionToTheBudget(@RequestBody UserAssignmentToGroup userAssignmentToGroup) {
-        // Date to string.
-        System.out.println("1");
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, 1);
         SimpleDateFormat format1 = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         String formatted = format1.format(cal.getTime());
         try {
-            // Add date to the last object in list.e
 
             userAssignmentToGroup.getBudgetList().get(userAssignmentToGroup.getBudgetList().size() - 1).setDate(formatted);
 
@@ -289,8 +290,10 @@ public class UserController {
         SimpleDateFormat format1 = new SimpleDateFormat("yyyy-MM-dd");
         String formatted = format1.format(cal.getTime());
 
+        //New group
         UserAssignmentToGroup userAssignmentToGroup =
-                new UserAssignmentToGroup(budgetListForUserAssignment, arrayWithInformationAboutNewBudget[0], randomUniqueCodeForBudget, formatted, null);
+                new UserAssignmentToGroup(budgetListForUserAssignment, arrayWithInformationAboutNewBudget[0]
+                        , randomUniqueCodeForBudget, formatted, null);
 
 
         List<UserInBudget> listOfUsersForUatg = userInBudgetRepository.findByNickname(arrayWithInformationAboutNewBudget[1]);
@@ -341,14 +344,10 @@ public class UserController {
 
     @GetMapping("/checkPermission/{uniqueCode}&{nickname}")
     public Permission checkPermission(@PathVariable String uniqueCode, @PathVariable String nickname) {
-        System.out.println(nickname);
-        System.out.println(uniqueCode);
         List<User> findUser = userRepository.findByNickname(nickname);
-        System.out.println(findUser.size());
         if (findUser.size() > 0) {
             for (Permission x : findUser.get(0).getPermission()) {
                 if (x.getUniqueGroupCode().equals(uniqueCode)) {
-                    System.out.println("found");
                     return x;
                 }
             }
@@ -368,15 +367,12 @@ public class UserController {
         if (listForFindUserToLogin.size() > 0 && listForFindUserToLogin.get(0).getPassword().getPassword().equals(userPass.getPassword().getPassword())
                 && listForFindUserToLogin.get(0).getConfirm().equals("Confirm")) {
             returnUser = new User(listForFindUserToLogin.get(0));
-            System.out.println(returnUser.getRole());
-            System.out.println(listForFindUserToLogin.get(0).getNickname());
-            System.out.println(listForFindUserToLogin.get(0).getRole());
-            System.out.println(listForFindUserToLogin.get(0).getEmail());
+
             return returnUser;
         } else {
             return returnUser = new User("NC", "NC");
         }
-        //List<User> findUserToLogin =
+
     }
 
     @PostMapping({"/createFastTwojAccount"})
@@ -430,8 +426,9 @@ public class UserController {
     @PostMapping("/createUser")
     public String[] createUser(@RequestBody User user) {
         List<User> findNicknameInDataBase = userRepository.findByNickname(user.getNickname());
-        if (findNicknameInDataBase.size() != 0) {
-            String[] message = {"Nickname already exist."};
+        List<User> findEmail = userRepository.findByEmail(user.getEmail());
+        if (findNicknameInDataBase.size() != 0 || findEmail.size() !=0) {
+            String[] message = {"User already exist."};
             return message;
         } else {
             String randomUniqueCodeForBudget;
@@ -447,6 +444,8 @@ public class UserController {
             user.setUserAssignmentToGroup(listToSetItInNewUserSecond);
 
             user.setConfirm(randomUniqueCodeForBudget);
+
+            user.setRole("USER");
 
             UserInBudget userInBudget = new UserInBudget();
 
@@ -575,9 +574,12 @@ public class UserController {
     //Return user with list of budgets. This method returns all all entries included in
     @GetMapping({"/findUser/{nickname}"})
     public User findUser(@PathVariable String nickname) {
-        List<User> findUser = userRepository.findByNickname(nickname);
-        //TODO if no result
-        return findUser.get(0);
+        try {
+            List<User> findUser = userRepository.findByNickname(nickname);
+            return findUser.get(0);
+        }catch (IndexOutOfBoundsException e){
+            return  null;
+        }
     }
 
     @GetMapping("/findEmail/{email}")
@@ -804,7 +806,6 @@ public class UserController {
 
     @PostMapping({"/saveBudgetSettings"})
     public void saveBudgetSettings(@RequestBody UserAssignmentToGroup userAssignmentToGroup) {
-        System.out.println(userAssignmentToGroup.getBudgetEndDate());
         List<UserAssignmentToGroup> uatg = userAssignmentToGroupRepository.findByUniqueGroupCode(userAssignmentToGroup.getUniqueGroupCode());
         uatg.get(0).setBudgetStartDate(userAssignmentToGroup.getBudgetStartDate());
         uatg.get(0).setBudgetEndDate(userAssignmentToGroup.getBudgetEndDate());
@@ -870,7 +871,7 @@ public class UserController {
 
         }
 
-        return "Congratulations! Your mail has been send to the user.";
+        return "Your mail has been send to the user.";
     }
 
     public List<History> deleteHistoryForALlUsers(History h, User user){
